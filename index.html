@@ -226,7 +226,7 @@ select.finput{cursor:pointer;appearance:none;background-image:url("data:image/sv
   .toolbar{display:none;padding:8px 12px;gap:7px}
   .toolbar.mob-open{display:flex}
   .fg{flex:1 1 calc(50% - 4px);min-width:0}
-  .fg .flabel{display:none}
+  .fg .flabel{display:block;font-size:10px;margin-bottom:3px;color:var(--txt3)}
   .fsel{max-width:100%;width:100%}
   .vt{margin-left:0;order:99;width:100%}
   .vt button{flex:1;justify-content:center}
@@ -370,7 +370,7 @@ select.finput{cursor:pointer;appearance:none;background-image:url("data:image/sv
         <option value="">Tous</option><option>À prévoir</option><option>En attente</option>
       </select>
     </div>
-    <div class="fg"><span class="flabel">Étiquette</span>
+    <div class="fg"><span class="flabel">Étiquettes</span>
       <select class="fsel" id="fEtiq" onchange="filter()">
         <option value="">Toutes</option><option>À Faire !</option><option>Faites</option>
       </select>
@@ -457,7 +457,7 @@ select.finput{cursor:pointer;appearance:none;background-image:url("data:image/sv
           <select class="finput" id="n_ctrl"><option value="">—</option><option>À prévoir</option><option>En attente</option><option>Planifié</option><option>Fait</option></select></div>
         <div class="fld"><div class="flbl">Facteurs externes</div>
           <select class="finput" id="n_ext"><option>NON</option><option>OUI !</option></select></div>
-        <div class="fld"><div class="flbl">Étiquette</div>
+        <div class="fld"><div class="flbl">Étiquettes</div>
           <select class="finput" id="n_etiq"><option value="">—</option><option>À Faire !</option><option>Faites</option></select></div>
         <div class="fld full"><div class="flbl">Notes</div>
           <textarea class="finput ta" id="n_note" placeholder="Remarques, points d'attention…"></textarea></div>
@@ -741,7 +741,7 @@ const cols = [
   {k:'type',l:'Type',s:true},{k:'statut',l:'Statut',s:true},
   {k:'technicien',l:'Technicien',s:true},{k:'plans',l:'Plans',s:true},
   {k:'debut',l:'Début',s:true},{k:'controle',l:'Contrôle',s:true},
-  {k:'etiquettes',l:'Étiquette',s:true},{k:'facteurs',l:'Infl. ext.',s:true},
+  {k:'etiquettes',l:'Étiquettes',s:true},{k:'facteurs',l:'Infl. ext.',s:true},
 ];
 
 function renderTable(el) {
