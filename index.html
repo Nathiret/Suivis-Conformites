@@ -458,22 +458,24 @@ function disconnect() {
 // ═══════════════════════════════════════════════
 //  API
 // ═══════════════════════════════════════════════
+// Toutes les opérations passent par GET pour éviter les blocages CORS sur POST.
+// Les données sont encodées en JSON dans le paramètre ?payload=
 async function apiGet(params = {}) {
   const url = new URL(API_URL);
   Object.entries(params).forEach(([k,v]) => url.searchParams.set(k, v));
-  const r = await fetch(url.toString(), { method: 'GET', cache: 'no-store' });
+  // Apps Script redirige vers une URL de type /exec?... — il faut suivre les redirections
+  const r = await fetch(url.toString(), { method: 'GET', cache: 'no-store', redirect: 'follow' });
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
   return r.json();
 }
 
+// Remplace l'ancien apiPost — tout passe maintenant en GET
 async function apiPost(body) {
-  const r = await fetch(API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  });
-  if (!r.ok) throw new Error(`HTTP ${r.status}`);
-  return r.json();
+  const { action, row, data } = body;
+  const params = { action };
+  if (row  != null) params.row     = row;
+  if (data != null) params.payload = JSON.stringify(data);
+  return apiGet(params);
 }
 
 // ═══════════════════════════════════════════════
