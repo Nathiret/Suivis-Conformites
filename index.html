@@ -124,6 +124,7 @@ tr:hover td{background:var(--surf2);color:var(--txt);cursor:pointer}
 .b-encours{background:rgba(37,99,235,.12);color:#58a6ff}
 .b-plan{background:rgba(188,140,255,.12);color:var(--purple)}
 .b-aplan{background:rgba(210,153,34,.12);color:var(--warn)}
+.b-acompte{background:rgba(248,81,73,.1);color:#ff7b72}
 .b-def{background:rgba(139,148,158,.08);color:var(--txt2)}
 .b-ctrl-prev{background:rgba(210,153,34,.12);color:var(--warn)}
 .b-ctrl-att{background:rgba(37,99,235,.12);color:#58a6ff}
@@ -160,7 +161,7 @@ tr:hover td{background:var(--surf2);color:var(--txt);cursor:pointer}
 .fld{display:flex;flex-direction:column;gap:4px}
 .fld.full{grid-column:1/-1}
 .flbl{font-size:11px;color:var(--txt3);font-weight:500;text-transform:uppercase;letter-spacing:.4px}
-.fval{background:var(--surf2);border:1px solid var(--bord);border-radius:var(--r);padding:8px 11px;color:var(--txt);font-size:13px;min-height:36px;display:flex;align-items:center}
+.fval{background:var(--surf2);border:1px solid var(--bord);border-radius:var(--r);padding:8px 11px;color:var(--txt);font-size:13px;min-height:0;display:flex;align-items:center}
 .fval.empty{color:var(--txt3);font-style:italic}
 .finput{background:var(--surf2);border:1px solid var(--bord);border-radius:var(--r);padding:8px 11px;color:var(--txt);font-size:13px;font-family:'Inter',sans-serif;outline:none;width:100%;transition:border-color .2s;min-height:36px}
 .finput:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--acc-glow)}
@@ -272,7 +273,7 @@ select.finput{cursor:pointer;appearance:none;background-image:url("data:image/sv
     <div class="fg"><span class="flabel">Statut</span>
       <select class="fsel" id="fStatut" onchange="filter()">
         <option value="">Tous</option>
-        <option>En cours</option><option>Terminé</option><option>Plannifié</option><option>À plannifier</option>
+        <option>En cours</option><option>Plannifié</option><option>À plannifier</option><option>Attente acompte</option><option>Terminé</option>
       </select>
     </div>
     <div class="fg"><span class="flabel">Technicien</span>
@@ -358,9 +359,9 @@ select.finput{cursor:pointer;appearance:none;background-image:url("data:image/sv
         <div class="fld"><div class="flbl">Type</div>
           <select class="finput" id="n_type"><option value="">—</option><option>Appartement</option><option>Maison</option><option>Communs</option><option>Commerce</option><option>Tertiaire</option><option>Borne de Recharge</option></select></div>
         <div class="fld"><div class="flbl">Statut</div>
-          <select class="finput" id="n_statut"><option>À plannifier</option><option>Plannifié</option><option>En cours</option><option>Terminé</option></select></div>
+          <select class="finput" id="n_statut"><option>En cours</option><option>Plannifié</option><option>À plannifier</option><option>Attente acompte</option><option>Terminé</option></select></div>
         <div class="fld"><div class="flbl">Technicien</div>
-          <select class="finput" id="n_tech"><option value="">—</option><option>Nathan</option><option>Melvyn</option><option>Gary</option><option>Gabriel</option></select></div>
+          <select class="finput" id="n_tech"><option value="">—</option><option>Nathan</option><option>Melvyn</option><option>Gary</option><option>Gabriel</option><option>Eddy</option><option>Logan</option><option>Multi</option><option>Théo</option></select></div>
         <div class="fld"><div class="flbl">Plans</div>
           <select class="finput" id="n_plans"><option value="">—</option><option>À faire</option><option>En attente</option><option>Commencé</option><option>Fait</option></select></div>
         <div class="fld"><div class="flbl">Date début</div>
@@ -486,7 +487,12 @@ async function loadData() {
   try {
     const res = await apiGet({ action: 'getAll' });
     if (res.error) throw new Error(res.error);
-    allData = res.data || [];
+    allData = (res.data || []).map(r => ({
+      ...r,
+      debut:        sanitizeDate(r.debut),
+      fin:          sanitizeDate(r.fin),
+      date_controle:sanitizeDate(r.date_controle),
+    }));
     populateFilters();
     filter();
     sync('ok', `Sync ${hhmm()}`);
@@ -499,11 +505,28 @@ async function loadData() {
 
 function refresh() { loadData(); }
 
+const TYPE_CATEGORIES = ['Appartement','Maison','Communs','Commerce','Tertiaire','Borne de Recharge'];
+
+function normalizeType(t) {
+  if (!t) return '';
+  const lc = t.toLowerCase();
+  if (lc.startsWith('appartement')) return 'Appartement';
+  if (lc.startsWith('maison')) return 'Maison';
+  if (lc.startsWith('communs') || lc.startsWith('commun')) return 'Communs';
+  if (lc.startsWith('commerce')) return 'Commerce';
+  if (lc.startsWith('tertiaire')) return 'Tertiaire';
+  if (lc.includes('borne') || lc.includes('recharge')) return 'Borne de Recharge';
+  return t;
+}
+
 function populateFilters() {
   const techs = uniq(allData.map(r => r.technicien)).sort();
-  const types = uniq(allData.map(r => r.type)).sort();
+  // Filtre Type : uniquement les 6 catégories qui apparaissent réellement dans les données
+  const usedCats = TYPE_CATEGORIES.filter(cat =>
+    allData.some(r => normalizeType(r.type) === cat)
+  );
   sel('fTech', techs);
-  sel('fType', types);
+  sel('fType', usedCats);
 }
 
 function sel(id, vals) {
@@ -524,7 +547,7 @@ function filter() {
   filtered = allData.filter(r => {
     if (fS && r.statut !== fS) return false;
     if (fT && r.technicien !== fT) return false;
-    if (fTy && !r.type.includes(fTy)) return false;
+    if (fTy && normalizeType(r.type) !== fTy) return false;
     if (fC && r.controle !== fC) return false;
     if (fE && !r.etiquettes.includes(fE)) return false;
     if (fEx && r.facteurs !== fEx) return false;
@@ -537,6 +560,11 @@ function filter() {
 
   if (sortKey) {
     filtered.sort((a,b) => {
+      if (sortKey === 'statut') {
+        const ai = STATUT_ORDER.indexOf(a.statut), bi = STATUT_ORDER.indexOf(b.statut);
+        const ar = ai < 0 ? 999 : ai, br = bi < 0 ? 999 : bi;
+        return (ar - br) * sortDir;
+      }
       const av = (a[sortKey]||'').toLowerCase(), bv = (b[sortKey]||'').toLowerCase();
       return av<bv?-sortDir:av>bv?sortDir:0;
     });
@@ -560,7 +588,7 @@ function clearFilters() {
 function renderStats() {
   const counts = {};
   filtered.forEach(r => { counts[r.statut] = (counts[r.statut]||0)+1; });
-  const cols = {'En cours':'#58a6ff','Terminé':'#3fb950','Plannifié':' #bc8cff','À plannifier':'#d29922'};
+  const cols = {'En cours':'#58a6ff','Terminé':'#3fb950','Plannifié':'#bc8cff','À plannifier':'#d29922','Attente acompte':'#ff7b72'};
   document.getElementById('stats').innerHTML =
     Object.entries(counts).map(([s,c]) =>
       `<div class="stat"><div class="sdot" style="background:${cols[s]||'#8b949e'}"></div><span>${s} <span class="cbadge">${c}</span></span></div>`
@@ -596,7 +624,7 @@ const cols = [
 ];
 
 function renderTable(el) {
-  const arr = k => k===sortKey?(sortDir>0?' ↑':' ↓'):'';
+  const arr = k => !sortKey||k!==sortKey?'':sortDir>0?' ↑':' ↓';
   el.innerHTML = `<div class="tbl-wrap"><table><thead><tr>${cols.map(c=>
     `<th class="${c.k===sortKey?'sorted':''}" ${c.s?`onclick="sortBy('${c.k}')"`:''}>${c.l}${arr(c.k)}</th>`
   ).join('')}</tr></thead><tbody>${filtered.map((r,i)=>`
@@ -633,8 +661,13 @@ function renderCards(el) {
     </div>`).join('')}</div>`;
 }
 
+const STATUT_ORDER = ['En cours','Plannifié','À plannifier','Attente acompte','Terminé'];
+
 function sortBy(k) {
-  if (sortKey===k) sortDir*=-1; else { sortKey=k; sortDir=1; }
+  if (sortKey === k) {
+    if (sortDir === 1) { sortDir = -1; }
+    else { sortKey = null; sortDir = 1; } // 3e clic = reset
+  } else { sortKey = k; sortDir = 1; }
   filter();
 }
 
@@ -642,7 +675,7 @@ function sortBy(k) {
 //  BADGES
 // ═══════════════════════════════════════════════
 function bStatut(s) {
-  const m={'Terminé':'b-termine','En cours':'b-encours','Plannifié':'b-plan','À plannifier':'b-aplan'};
+  const m={'Terminé':'b-termine','En cours':'b-encours','Plannifié':'b-plan','À plannifier':'b-aplan','Attente acompte':'b-acompte'};
   return s?`<span class="badge ${m[s]||'b-def'}">${esc(s)}</span>`:'';
 }
 function bCtrl(c) {
@@ -711,8 +744,8 @@ function renderDet() {
       ${f('Accès','acces','text',['Client','Clés','Contact'])}
     </div></div>
     <div class="dsec"><div class="dsec-ttl">Statut & Affectation</div><div class="fg2">
-      ${f('Statut','statut','text',['À plannifier','Plannifié','En cours','Terminé'])}
-      ${f('Technicien','technicien','text',['Nathan','Melvyn','Gary','Gabriel'])}
+      ${f('Statut','statut','text',['En cours','Plannifié','À plannifier','Attente acompte','Terminé'])}
+      ${f('Technicien','technicien','text',['Nathan','Melvyn','Gary','Gabriel','Eddy','Logan','Multi','Théo'])}
       ${f('Plans','plans','text',['À faire','En attente','Commencé','Fait'])}
       ${f('Étiquettes','etiquettes','text',['À Faire !','Faites'])}
     </div></div>
@@ -852,6 +885,26 @@ function toast(msg, type='ok', dur=3500) {
   el.textContent=msg;
   wrap.appendChild(el);
   setTimeout(()=>{ el.style.transition='all .25s'; el.style.opacity='0'; el.style.transform='translateY(8px)'; setTimeout(()=>el.remove(),250); }, dur);
+}
+
+// Sanitise une valeur de date : si c'est une chaîne de type JS Date (Tue Jan 16 2024 00:00:00 GMT+...)
+// on la convertit en dd/MM/yyyy. Si c'est déjà au bon format ou vide, on laisse tel quel.
+function sanitizeDate(v) {
+  if (!v) return '';
+  const s = String(v).trim();
+  // Déjà au format dd/MM/yyyy
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s;
+  // Ressemble à une chaîne JS Date (commence par un jour de semaine ou contient GMT)
+  if (/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)|GMT/.test(s)) {
+    const d = new Date(s);
+    if (!isNaN(d)) {
+      const dd = String(d.getDate()).padStart(2,'0');
+      const mm = String(d.getMonth()+1).padStart(2,'0');
+      const yyyy = d.getFullYear();
+      return `${dd}/${mm}/${yyyy}`;
+    }
+  }
+  return s;
 }
 
 function esc(s) {
