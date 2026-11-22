@@ -31,12 +31,14 @@
   --sh:       0 8px 32px rgba(0,0,0,.5);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Inter',system-ui,sans-serif;font-size:14px;line-height:1.5;overflow:hidden}
-body{display:flex;flex-direction:column}
+html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Inter',system-ui,sans-serif;font-size:14px;line-height:1.5}
+body{display:flex;flex-direction:column;overflow:hidden}
+/* Setup screen : scroll autorisé */
+body.setup-mode{overflow:auto}
 
 /* ─── SETUP SCREEN ─── */
-#setupScreen{display:flex;align-items:center;justify-content:center;flex:1;padding:24px}
-.setup-card{background:var(--surf);border:1px solid var(--bord);border-radius:var(--r2);padding:36px 40px;width:min(540px,100%);text-align:center}
+#setupScreen{display:flex;align-items:flex-start;justify-content:center;flex:1;padding:24px;min-height:100vh}
+.setup-card{background:var(--surf);border:1px solid var(--bord);border-radius:var(--r2);padding:36px 40px;width:min(540px,100%);text-align:center;margin:auto}
 .setup-card h1{font-size:22px;font-weight:700;margin-bottom:8px}
 .setup-card p{color:var(--txt2);font-size:13px;margin-bottom:24px;line-height:1.65}
 .setup-steps{text-align:left;margin:0 0 28px;padding:20px 24px;background:var(--surf2);border-radius:var(--r);border:1px solid var(--bord)}
@@ -106,8 +108,10 @@ body{display:flex;flex-direction:column}
 .content{flex:1;overflow-y:auto;padding:18px 20px}
 
 /* TABLE */
-.tbl-wrap{background:var(--surf);border:1px solid var(--bord);border-radius:var(--r2);overflow:hidden}
-table{width:100%;border-collapse:collapse}
+.tbl-wrap{background:var(--surf);border:1px solid var(--bord);border-radius:var(--r2);overflow-x:auto;-webkit-overflow-scrolling:touch;position:relative}
+/* Ombre droite pour indiquer qu'il y a du contenu à scroller */
+.tbl-wrap::after{content:'';position:absolute;top:0;right:0;width:24px;height:100%;background:linear-gradient(to right,transparent,rgba(13,17,23,.6));pointer-events:none;border-radius:0 var(--r2) var(--r2) 0}
+table{width:100%;border-collapse:collapse;min-width:720px}
 th{background:var(--surf2);color:var(--txt3);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;padding:9px 12px;text-align:left;border-bottom:1px solid var(--bord);white-space:nowrap;cursor:pointer;user-select:none}
 th:hover{color:var(--txt);background:var(--surf3)}
 th.sorted{color:var(--accent)}
@@ -194,11 +198,50 @@ select.finput{cursor:pointer;appearance:none;background-image:url("data:image/sv
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--bord2);border-radius:3px}
 
+/* ─── RESPONSIVE MOBILE ─── */
 @media(max-width:680px){
-  .fg2{grid-template-columns:1fr}
+  /* Setup : padding réduit */
+  #setupScreen{padding:16px;align-items:flex-start}
+  .setup-card{padding:24px 18px;margin:0 auto}
+
+  /* Header : 2 lignes */
+  .hdr{height:auto;flex-wrap:wrap;padding:10px 14px;gap:8px}
+  .logo{order:1}
+  .btn.btn-primary.btn-sm[onclick="openAddModal()"]{order:2;margin-left:auto}
+  .sync-pill{order:3}
+  .btn-ghost[onclick="disconnect()"]{order:4}
+  .search-wrap{order:5;flex:0 0 100%;max-width:100%}
+
+  /* Toolbar : grille 2 colonnes */
+  .toolbar{padding:8px 12px;gap:7px}
+  .fg{flex:1 1 calc(50% - 4px);min-width:0}
+  .fg .flabel{display:none} /* labels cachés sur mobile, le select suffit */
+  .fsel{max-width:100%;width:100%}
+  .vt{margin-left:0;order:99;width:100%}
+  .vt button{flex:1;justify-content:center}
+
+  /* Stats : wrap, taille réduite */
+  .stats{display:flex;flex-wrap:wrap;gap:7px;order:98;width:100%}
+  .stat{font-size:11px}
+
+  /* Bouton reset filtres */
+  .btn-ghost[onclick="clearFilters()"]{order:97}
+
+  /* Table : scroll horizontal natif */
+  .content{padding:12px}
+  .tbl-wrap{border-radius:var(--r)}
+
+  /* Cards : 1 colonne */
   .grid{grid-template-columns:1fr}
-  .stats{display:none}
+
+  /* Detail panel : plein écran */
   .d-panel{width:100vw}
+  .fg2{grid-template-columns:1fr}
+
+  /* Modal : plein écran */
+  .m-overlay{padding:0;align-items:flex-end}
+  .modal{width:100%;max-height:95vh;border-radius:var(--r2) var(--r2) 0 0}
+  .fg2{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -419,6 +462,8 @@ const STORAGE_KEY = 'tis_api_url';
     API_URL = saved;
     showApp();
     loadData();
+  } else {
+    document.body.classList.add('setup-mode');
   }
   document.getElementById('searchInput').addEventListener('input', debounce(filter, 200));
   document.addEventListener('keydown', e => {
@@ -448,6 +493,9 @@ function connectApi() {
 function showApp() {
   document.getElementById('setupScreen').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
+  document.body.classList.remove('setup-mode');
+  // Vue Fiches par défaut sur mobile
+  if (window.innerWidth < 640) setView('cards');
 }
 
 function disconnect() {
@@ -457,6 +505,7 @@ function disconnect() {
   allData = []; filtered = [];
   document.getElementById('app').style.display = 'none';
   document.getElementById('setupScreen').style.display = 'flex';
+  document.body.classList.add('setup-mode');
 }
 
 // ═══════════════════════════════════════════════
