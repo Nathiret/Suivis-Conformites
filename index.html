@@ -161,8 +161,8 @@ tr:hover td{background:var(--surf2);color:var(--txt);cursor:pointer}
 .fld{display:flex;flex-direction:column;gap:4px}
 .fld.full{grid-column:1/-1}
 .flbl{font-size:11px;color:var(--txt3);font-weight:500;text-transform:uppercase;letter-spacing:.4px}
-.fval{background:var(--surf2);border:1px solid var(--bord);border-radius:var(--r);padding:8px 11px;color:var(--txt);font-size:13px;min-height:0;display:flex;align-items:center}
-.fval.empty{color:var(--txt3);font-style:italic}
+.fval{background:var(--surf2);border:1px solid var(--bord);border-radius:var(--r);padding:8px 11px;color:var(--txt);font-size:13px;line-height:1.4;word-break:break-word}
+.fval.empty{color:var(--txt3);font-style:italic;padding:4px 11px;font-size:12px}
 .finput{background:var(--surf2);border:1px solid var(--bord);border-radius:var(--r);padding:8px 11px;color:var(--txt);font-size:13px;font-family:'Inter',sans-serif;outline:none;width:100%;transition:border-color .2s;min-height:36px}
 .finput:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--acc-glow)}
 .finput.ta{min-height:80px;resize:vertical}
@@ -405,6 +405,9 @@ let sortDir = 1;
 let curRow = null;
 let editing = false;
 
+const STATUT_ORDER = ['En cours','Plannifié','À plannifier','Attente acompte','Terminé'];
+const TYPE_CATEGORIES = ['Appartement','Maison','Communs','Commerce','Tertiaire','Borne de Recharge'];
+
 const STORAGE_KEY = 'tis_api_url';
 
 // ═══════════════════════════════════════════════
@@ -504,8 +507,6 @@ async function loadData() {
 }
 
 function refresh() { loadData(); }
-
-const TYPE_CATEGORIES = ['Appartement','Maison','Communs','Commerce','Tertiaire','Borne de Recharge'];
 
 function normalizeType(t) {
   if (!t) return '';
@@ -619,8 +620,8 @@ const cols = [
   {k:'chantier',l:'Chantier',s:true},{k:'adresse',l:'Adresse',s:true},
   {k:'type',l:'Type',s:true},{k:'statut',l:'Statut',s:true},
   {k:'technicien',l:'Technicien',s:true},{k:'plans',l:'Plans',s:true},
-  {k:'debut',l:'Début'},{k:'controle',l:'Contrôle'},
-  {k:'etiquettes',l:'Étiquette'},{k:'facteurs',l:'Ext.'},
+  {k:'debut',l:'Début',s:true},{k:'controle',l:'Contrôle',s:true},
+  {k:'etiquettes',l:'Étiquette',s:true},{k:'facteurs',l:'Infl. ext.',s:true},
 ];
 
 function renderTable(el) {
@@ -660,8 +661,6 @@ function renderCards(el) {
       </div>
     </div>`).join('')}</div>`;
 }
-
-const STATUT_ORDER = ['En cours','Plannifié','À plannifier','Attente acompte','Terminé'];
 
 function sortBy(k) {
   if (sortKey === k) {
@@ -724,6 +723,15 @@ function renderDet() {
   document.getElementById('editBtn').textContent = editing?'👁 Consulter':'✏️ Modifier';
   document.getElementById('dAct').style.display = editing?'flex':'none';
 
+  // Convertit dd/MM/yyyy → yyyy-MM-dd pour input[type=date]
+  const toInputDate = s => {
+    if (!s) return '';
+    const m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    return m ? `${m[3]}-${m[2]}-${m[1]}` : s;
+  };
+  // Convertit yyyy-MM-dd → dd/MM/yyyy pour stockage
+  // (appliqué au saveDet via data-datetype)
+
   const f = (lbl, key, type='text', opts=null) => {
     const v = curRow[key]||'';
     if (!editing) return `<div class="fld${type==='textarea'?' full':''}"><div class="flbl">${lbl}</div>
@@ -732,6 +740,10 @@ function renderDet() {
       <select class="finput" data-key="${key}"><option value="">—</option>${opts.map(o=>`<option${v===o?' selected':''}>${o}</option>`).join('')}</select></div>`;
     if (type==='textarea') return `<div class="fld full"><div class="flbl">${lbl}</div>
       <textarea class="finput ta" data-key="${key}">${esc(v)}</textarea></div>`;
+    if (type==='date') return `<div class="fld"><div class="flbl">${lbl}</div>
+      <input type="date" class="finput" data-key="${key}" data-datetype="dmy" value="${toInputDate(v)}"></div>`;
+    if (type==='time') return `<div class="fld"><div class="flbl">${lbl}</div>
+      <input type="time" step="1" class="finput" data-key="${key}" value="${esc(v)}"></div>`;
     return `<div class="fld"><div class="flbl">${lbl}</div>
       <input type="${type}" class="finput" data-key="${key}" value="${esc(v)}"></div>`;
   };
@@ -750,12 +762,12 @@ function renderDet() {
       ${f('Étiquettes','etiquettes','text',['À Faire !','Faites'])}
     </div></div>
     <div class="dsec"><div class="dsec-ttl">Planification & Temps</div><div class="fg2">
-      ${f('Date début','debut')} ${f('Date fin réelle','fin')}
+      ${f('Date début','debut','date')} ${f('Date fin réelle','fin','date')}
       ${f('Temps estimé','temps_estime')} ${f('Temps restant','temps_restant')}
     </div></div>
     <div class="dsec"><div class="dsec-ttl">Contrôle</div><div class="fg2">
       ${f('Contrôle','controle','text',['À prévoir','En attente','Planifié','Fait'])}
-      ${f('Date contrôle','date_controle')} ${f('Heure contrôle','heure_controle')}
+      ${f('Date contrôle','date_controle','date')} ${f('Heure contrôle','heure_controle','time')}
       ${f('Facteurs externes','facteurs','text',['NON','OUI !'])}
     </div></div>
     ${curRow.plans_pdf?`<div class="dsec"><div class="dsec-ttl">Documents</div><div class="fg2">
@@ -767,7 +779,15 @@ function renderDet() {
 }
 
 async function saveDet() {
-  document.querySelectorAll('#dBody [data-key]').forEach(el => { curRow[el.dataset.key]=el.value; });
+  document.querySelectorAll('#dBody [data-key]').forEach(el => {
+    let v = el.value;
+    // Reconvertir yyyy-MM-dd → dd/MM/yyyy pour les champs date
+    if (el.dataset.datetype === 'dmy' && v) {
+      const m = v.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (m) v = `${m[3]}/${m[2]}/${m[1]}`;
+    }
+    curRow[el.dataset.key] = v;
+  });
   const btn = document.getElementById('saveBtn');
   btn.disabled = true; btn.textContent = '⏳ Enregistrement…';
   sync('load', 'Écriture…');
