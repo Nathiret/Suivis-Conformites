@@ -72,7 +72,7 @@ body.setup-mode{overflow:auto}
 #app{display:none;flex-direction:column;height:100%}
 
 /* HEADER */
-.hdr{background:var(--surf);border-bottom:1px solid var(--bord);padding:0 20px;height:54px;display:flex;align-items:center;gap:14px;flex-shrink:0}
+.hdr{background:var(--surf);border-bottom:1px solid var(--bord);padding:0 20px;height:54px;display:flex;align-items:center;gap:14px;flex-shrink:0;position:relative;z-index:10}
 .logo{font-weight:700;font-size:15px;display:flex;align-items:center;gap:9px;white-space:nowrap}
 .logo-icon{font-size:18px}
 .logo-tag{background:var(--accent);color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;letter-spacing:.6px}
@@ -108,9 +108,12 @@ body.setup-mode{overflow:auto}
 .content{flex:1;overflow-y:auto;padding:18px 20px}
 
 /* TABLE */
-.tbl-wrap{background:var(--surf);border:1px solid var(--bord);border-radius:var(--r2);overflow-x:auto;-webkit-overflow-scrolling:touch;position:relative}
-/* Ombre droite pour indiquer qu'il y a du contenu à scroller */
-.tbl-wrap::after{content:'';position:absolute;top:0;right:0;width:24px;height:100%;background:linear-gradient(to right,transparent,rgba(13,17,23,.6));pointer-events:none;border-radius:0 var(--r2) var(--r2) 0}
+/* Conteneur externe : clip le scroll et porte l'ombre fixe */
+.tbl-outer{position:relative;border-radius:var(--r2)}
+/* Ombre droite FIXE — reste collée au bord droit même quand on scrolle */
+.tbl-outer::after{content:'';position:absolute;top:0;right:0;width:32px;height:100%;background:linear-gradient(to right,transparent,rgba(13,17,23,.7));pointer-events:none;border-radius:0 var(--r2) var(--r2) 0;z-index:2;transition:opacity .2s}
+.tbl-outer.at-end::after{opacity:0} /* disparaît quand on est arrivé au bout */
+.tbl-wrap{background:var(--surf);border:1px solid var(--bord);border-radius:var(--r2);overflow-x:auto;-webkit-overflow-scrolling:touch}
 table{width:100%;border-collapse:collapse;min-width:720px}
 th{background:var(--surf2);color:var(--txt3);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;padding:9px 12px;text-align:left;border-bottom:1px solid var(--bord);white-space:nowrap;cursor:pointer;user-select:none}
 th:hover{color:var(--txt);background:var(--surf3)}
@@ -675,7 +678,7 @@ const cols = [
 
 function renderTable(el) {
   const arr = k => !sortKey||k!==sortKey?'':sortDir>0?' ↑':' ↓';
-  el.innerHTML = `<div class="tbl-wrap"><table><thead><tr>${cols.map(c=>
+  el.innerHTML = `<div class="tbl-outer"><div class="tbl-wrap"><table><thead><tr>${cols.map(c=>
     `<th class="${c.k===sortKey?'sorted':''}" ${c.s?`onclick="sortBy('${c.k}')"`:''}>${c.l}${arr(c.k)}</th>`
   ).join('')}</tr></thead><tbody>${filtered.map((r,i)=>`
     <tr onclick="openDet(${i})">
@@ -689,7 +692,18 @@ function renderTable(el) {
       <td>${bCtrl(r.controle)}</td>
       <td>${bEtiq(r.etiquettes)}</td>
       <td>${bExt(r.facteurs)}</td>
-    </tr>`).join('')}</tbody></table></div>`;
+    </tr>`).join('')}</tbody></table></div></div>`;
+  /* Ombre droite fixe : disparaît quand le tableau est scrollé jusqu'au bout */
+  const wrap = el.querySelector('.tbl-wrap');
+  const outer = el.querySelector('.tbl-outer');
+  if (wrap && outer) {
+    const updateShadow = () => {
+      const atEnd = wrap.scrollLeft + wrap.clientWidth >= wrap.scrollWidth - 2;
+      outer.classList.toggle('at-end', atEnd);
+    };
+    wrap.addEventListener('scroll', updateShadow, {passive: true});
+    updateShadow();
+  }
 }
 
 function renderCards(el) {
