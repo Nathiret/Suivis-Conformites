@@ -1,4 +1,4 @@
-[README.md](https://github.com/user-attachments/files/35280921/README.md)
+[README.md](https://github.com/user-attachments/files/35291075/README.md)
 # T.I.S – Suivi Conformités
 
 Application web progressive (PWA) de suivi des chantiers de conformité électrique pour **Tech-Immo Services**.
@@ -49,6 +49,19 @@ icon-192.png             # Icône PWA 192×192
 icon-512.png             # Icône PWA 512×512
 icon-maskable-512.png    # Icône PWA maskable
 ```
+
+---
+
+## Première installation (administrateur)
+
+> Ces étapes sont réservées à l'administrateur qui met en place l'application pour la première fois.
+
+1. Dans Google Sheets → **Extensions → Apps Script** → coller le contenu de `Code.gs` → **Enregistrer**
+2. Choisir la fonction `initialiserAcces` → **Exécuter**. L'onglet **« Accès »** apparaît dans le Sheet : y ajouter un identifiant, un code et un rôle (`écriture` ou `lecture`) par technicien.
+3. **Déployer → Nouveau déploiement** → `Application Web` → Exécuter : `Moi` → Accès : `Tout le monde` → **Déployer**
+4. Copier l'URL de déploiement et la communiquer à chaque technicien.
+
+> Pour les mises à jour suivantes du script : utiliser **Gérer les déploiements → ✏️ → Nouvelle version** (l'URL reste la même).
 
 ---
 
