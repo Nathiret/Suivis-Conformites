@@ -61,19 +61,10 @@ body.ro .w-only{display:none!important}
 .url-input-wrap input{width:100%;background:var(--surf2);border:1px solid var(--bord);border-radius:var(--r);padding:11px 14px;color:var(--txt);font-size:16px;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s}
 .url-input-wrap input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--acc-glow)}
 .url-input-wrap input::placeholder{color:var(--txt3)}
+.url-hint{font-size:11px;color:var(--txt3);margin-top:5px;padding-left:2px}
 .setup-links{display:flex;justify-content:center;margin-top:14px}
 .link-btn{background:none;border:none;color:var(--info);font-size:12px;cursor:pointer;font-family:inherit;text-decoration:underline;text-underline-offset:2px}
-.admin-help{margin-top:22px;border-top:1px solid var(--bord);padding-top:16px}
-.admin-help summary{cursor:pointer;font-size:12px;color:var(--txt2);list-style:none;display:flex;align-items:center;gap:6px}
-.admin-help summary::-webkit-details-marker{display:none}
-.admin-help summary::before{content:'▸';transition:transform .15s}
-.admin-help[open] summary::before{transform:rotate(90deg)}
-.setup-steps{text-align:left;margin-top:12px;padding:16px 18px;background:var(--surf2);border-radius:var(--r);border:1px solid var(--bord)}
-.step{display:flex;gap:12px;margin-bottom:12px;align-items:flex-start;font-size:13px}
-.step:last-child{margin-bottom:0}
-.step-num{background:var(--accent);color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px}
-.step-txt{color:var(--txt2);line-height:1.5}
-.step-txt code{background:var(--surf3);border:1px solid var(--bord);padding:1px 6px;border-radius:4px;font-family:monospace;font-size:12px;color:var(--txt)}
+
 
 /* ─── BUTTONS ─── */
 .btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:var(--r);border:none;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;transition:all .15s;white-space:nowrap;text-decoration:none}
@@ -329,6 +320,7 @@ select.finput{cursor:pointer;appearance:none;-webkit-appearance:none;background-
     <div class="url-input-wrap" id="urlBlock">
       <label for="apiUrlInput">URL du script (Apps Script)</label>
       <input type="url" id="apiUrlInput" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <p class="url-hint">Cette URL vous est fournie par l'administrateur.</p>
     </div>
     <div class="url-input-wrap">
       <label for="loginUser">Identifiant</label>
@@ -345,15 +337,7 @@ select.finput{cursor:pointer;appearance:none;-webkit-appearance:none;background-
     </button>
     <div class="setup-links"><button class="link-btn" id="changeUrlLink" onclick="changeUrl()">Changer l'URL du script</button></div>
 
-    <details class="admin-help">
-      <summary>Première installation (administrateur)</summary>
-      <div class="setup-steps">
-        <div class="step"><div class="step-num">1</div><div class="step-txt">Google Sheet → <strong>Extensions → Apps Script</strong> → coller le contenu de <code>Code.gs</code> → <strong>Enregistrer</strong></div></div>
-        <div class="step"><div class="step-num">2</div><div class="step-txt">Choisir la fonction <code>initialiserAcces</code> → <strong>Exécuter</strong>. L'onglet « Accès » apparaît dans le Sheet : y mettre un code et un rôle par technicien.</div></div>
-        <div class="step"><div class="step-num">3</div><div class="step-txt"><strong>Déployer → Nouveau déploiement</strong> → <code>Application Web</code> → Exécuter : <code>Moi</code> → Accès : <code>Tout le monde</code></div></div>
-        <div class="step"><div class="step-num">4</div><div class="step-txt">Copier l'URL de déploiement ci-dessus. Pour les mises à jour suivantes : <strong>Gérer les déploiements → ✏️ → Nouvelle version</strong> (l'URL reste la même).</div></div>
-      </div>
-    </details>
+
   </div>
 </div>
 
