@@ -329,6 +329,14 @@ select.finput{cursor:pointer;appearance:none;-webkit-appearance:none;background-
 @media(orientation:landscape) and (max-height:500px){
   .fg{flex:1 1 calc(33.333% - 4px)}
 }
+
+/* ─── Champs date / heure : même gabarit que les autres champs + bouton effacer ─── */
+input[type=date].finput,input[type=time].finput{-webkit-appearance:none;appearance:none;display:block;flex:1;min-width:0;max-width:100%;width:100%;height:38px;text-align:left}
+input[type=date].finput::-webkit-date-and-time-value,input[type=time].finput::-webkit-date-and-time-value{text-align:left;min-height:1.2em;margin:0}
+input[type=date].finput::-webkit-datetime-edit,input[type=time].finput::-webkit-datetime-edit{padding:0}
+.dt-wrap{display:flex;gap:6px;align-items:stretch}
+.dt-clear{flex-shrink:0;width:38px;background:var(--surf2);border:1px solid var(--bord);border-radius:var(--r);color:var(--txt2);font-size:14px;cursor:pointer;font-family:inherit}
+.dt-clear:hover{color:var(--err);border-color:var(--bord2)}
 </style>
 </head>
 <body>
@@ -1035,7 +1043,7 @@ function renderControls(el) {
 
   const item = (r, withTime) => `
     <div class="ctl-item" onclick="openDet(${r._row})">
-      <div class="ctl-time${withTime && r.heure_controle ? '' : ' none'}">${withTime ? (r.heure_controle ? esc(r.heure_controle.slice(0,5)) : '—') : ''}</div>
+      ${withTime ? `<div class="ctl-time${r.heure_controle ? '' : ' none'}">${r.heure_controle ? esc(r.heure_controle.slice(0,5)) : '—'}</div>` : ''}
       <div class="ctl-main">
         <div class="ctl-name">${esc(r.chantier)}</div>
         <div class="ctl-addr">📍 ${esc(r.adresse) || '—'}</div>
@@ -1183,9 +1191,9 @@ function renderDet() {
     if (type==='textarea') return `<div class="fld full"><div class="flbl">${lbl}</div>
       <textarea class="finput ta" data-key="${key}">${esc(v)}</textarea></div>`;
     if (type==='date') return `<div class="fld"><div class="flbl">${lbl}</div>
-      <input type="date" class="finput" data-key="${key}" data-datetype="dmy" value="${esc(toInputDate(v))}"></div>`;
+      <div class="dt-wrap"><input type="date" class="finput" data-key="${key}" data-datetype="dmy" value="${esc(toInputDate(v))}"><button type="button" class="dt-clear" onclick="clearDt(this)" title="Effacer">✕</button></div></div>`;
     if (type==='time') return `<div class="fld"><div class="flbl">${lbl}</div>
-      <input type="time" step="1" class="finput" data-key="${key}" value="${esc(v)}"></div>`;
+      <div class="dt-wrap"><input type="time" step="1" class="finput" data-key="${key}" value="${esc(v)}"><button type="button" class="dt-clear" onclick="clearDt(this)" title="Effacer">✕</button></div></div>`;
     return `<div class="fld"><div class="flbl">${lbl}</div>
       <input type="text" class="finput" data-key="${key}" value="${esc(v)}"></div>`;
   };
@@ -1232,6 +1240,12 @@ function renderDet() {
     <div class="dsec"><div class="dsec-ttl">Notes</div><div class="fg2">
       ${f('Note','note','textarea')}
     </div></div>`;
+}
+
+function clearDt(btn) {
+  const inp = btn.previousElementSibling;
+  inp.value = '';
+  inp.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
 async function saveDet() {
