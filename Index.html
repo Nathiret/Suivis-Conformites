@@ -154,7 +154,7 @@ tr:hover td{background:var(--surf2);color:var(--txt);cursor:pointer}
 /* BADGES */
 .badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;white-space:nowrap}
 
-.b-termine{background:rgba(63,185,80,.1);color:#3fb950}
+.b-termine{background:rgba(63,185,80,.15);color:#3fb950}.b-encours{background:rgba(210,153,34,.18);color:#d29922}.b-aplan{background:rgba(188,100,255,.15);color:#c084fc}.b-plan{background:rgba(45,180,160,.15);color:#2dd4bf}.b-acompte{background:rgba(248,81,73,.15);color:#ff7b72}.b-plan-afaire{background:rgba(248,130,100,.15);color:#fb923c}.b-plan-commence{background:rgba(56,160,230,.15);color:#60b4f0}.b-plan-attente{background:rgba(139,148,158,.12);color:var(--txt2)}.b-plan-imprimer{background:rgba(249,168,37,.15);color:#fbbf24}.b-ctrl-prev{background:rgba(248,130,100,.15);color:#fb923c}.b-ctrl-att{background:rgba(139,148,158,.12);color:var(--txt2)}.b-ctrl-prevu{background:rgba(210,153,34,.18);color:#d29922}.b-ctrl-nc{background:rgba(220,38,38,.2);color:#f87171}.b-etiq-ok{background:rgba(63,185,80,.15);color:#3fb950}.b-etiq-f{background:rgba(248,81,73,.15);color:#ff7b72}.b-etiq-placer{background:rgba(249,168,37,.15);color:#fbbf24}.b-etiq-modif{background:rgba(99,102,241,.15);color:#818cf8}.b-def{background:rgba(139,148,158,.08);color:var(--txt2)}
 .b-encours{background:rgba(210,153,34,.15);color:#d29922}
 .b-plan{background:rgba(188,140,255,.12);color:var(--purple)}
 .b-aplan{background:rgba(210,153,34,.12);color:var(--warn)}
@@ -309,7 +309,7 @@ select.finput{cursor:pointer;appearance:none;-webkit-appearance:none;background-
   .modal{width:100%;max-height:calc(95vh - var(--safe-t));border-radius:var(--r2) var(--r2) 0 0}
 
   .toast-wrap{left:12px;right:12px}
-}@media(orientation:landscape) and (max-height:500px){.toolbar{display:none;padding:8px 12px 12px;gap:8px}.toolbar.mob-open{display:flex}.mob-bar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surf);border-bottom:1px solid var(--bord);flex-shrink:0}}
+}@media(orientation:landscape) and (max-height:500px){.toolbar{display:none}.toolbar.mob-open{display:flex}.mob-bar{display:flex}}
 </style>
 </head>
 <body>
@@ -965,7 +965,7 @@ function renderTable(el) {
       <td>${esc(r.type)}</td>
       <td>${bStatut(r.statut)}</td>
       <td>${r.technicien?`<span class="tech-tag">${esc(r.technicien)}</span>`:''}</td>
-      <td>${esc(r.plans)}</td>
+      <td>${bPlans(r.plans)}</td>
       <td style="font-size:12px;color:var(--txt3);font-family:monospace">${esc(r.debut)}</td>
       <td>${bCtrl(r.controle)}</td>
       <td>${bEtiq(r.etiquettes)}</td>
@@ -1069,15 +1069,20 @@ function bStatut(s) {
   const m={'Terminé':'b-termine','En cours':'b-encours','Plannifié':'b-plan','À plannifier':'b-aplan','Attente acompte':'b-acompte'};
   return s?`<span class="badge ${m[s]||'b-def'}">${esc(s)}</span>`:'';
 }
+function bPlans(p) {
+  if (!p) return '';
+  const m={'À faire':'b-plan-afaire','Commencé':'b-plan-commence','En attente':'b-plan-attente','À Imprimer':'b-plan-imprimer','Fait':'b-termine'};
+  return `<span class="badge ${m[p]||'b-def'}">${esc(p)}</span>`;
+}
 function bCtrl(c) {
   if (!c) return '';
-  const m={'À prévoir':'b-ctrl-prev','En attente':'b-ctrl-att','Planifié':'b-plan','Fait':'b-termine'};
+  const m={'À prévoir':'b-ctrl-prev','En attente':'b-ctrl-att','Planifié':'b-ctrl-prevu','Prévu':'b-ctrl-prevu','Fait':'b-termine','Non-conforme !':'b-ctrl-nc'};
   return `<span class="badge ${m[c]||'b-def'}">${esc(c)}</span>`;
 }
 function bEtiq(e) {
   if (!e) return '';
-  if (e.includes('À Faire')) return `<span class="badge b-etiq-f">📋 À Faire</span>`;
-  if (e.includes('Faites')) return `<span class="badge b-etiq-ok">✓ Faites</span>`;
+  const m={'Faites':'b-etiq-ok','À Faire !':'b-etiq-f','À Placer !':'b-etiq-placer','À Modifier !':'b-etiq-modif'};
+  for(const [k,v] of Object.entries(m)) if(e.includes(k.replace(' !',''))) return `<span class="badge ${v}">${esc(e)}</span>`;
   return `<span class="badge b-def">${esc(e)}</span>`;
 }
 function bExt(f) {
@@ -1088,18 +1093,18 @@ function bExt(f) {
 // ── Fonctions badge pour vue CARTE (avec emojis) ──────────────
 function bCtrlCard(c) {
   if (!c) return '';
-  const m={'À prévoir':'b-ctrl-prev','En attente':'b-ctrl-att','Planifié':'b-plan','Fait':'b-termine'};
+  const m={'À prévoir':'b-ctrl-prev','En attente':'b-ctrl-att','Planifié':'b-ctrl-prevu','Prévu':'b-ctrl-prevu','Fait':'b-termine','Non-conforme !':'b-ctrl-nc'};
   return `<span class="badge ${m[c]||'b-def'}">🔍 ${esc(c)}</span>`;
 }
 function bEtiqCard(e) {
   if (!e) return '';
-  if (e.includes('À Faire')) return `<span class="badge b-etiq-f">🏷️ À Faire</span>`;
-  if (e.includes('Faites')) return `<span class="badge b-etiq-ok">🏷️ Faites</span>`;
+  const m={'Faites':'b-etiq-ok','À Faire !':'b-etiq-f','À Placer !':'b-etiq-placer','À Modifier !':'b-etiq-modif'};
+  for(const [k,v] of Object.entries(m)) if(e.includes(k.replace(' !',''))) return `<span class="badge ${v}">🏷️ ${esc(e)}</span>`;
   return `<span class="badge b-def">🏷️ ${esc(e)}</span>`;
 }
 function bPlanCard(p) {
   if (!p) return '';
-  const m={'À prévoir':'b-ctrl-prev','En attente':'b-ctrl-att','Planifié':'b-plan','Fait':'b-termine','Envoyé':'b-termine'};
+  const m={'À faire':'b-plan-afaire','Commencé':'b-plan-commence','En attente':'b-plan-attente','À Imprimer':'b-plan-imprimer','Fait':'b-termine'};
   return `<span class="badge ${m[p]||'b-def'}">📐 ${esc(p)}</span>`;
 }
 
