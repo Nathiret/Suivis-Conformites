@@ -346,11 +346,9 @@ input[type=date].finput::-webkit-datetime-edit,input[type=time].finput::-webkit-
 
 /* Vue Contrôles : infos et actions rapides sur les contrôles à venir */
 .ctl-info{font-size:12px;color:var(--txt3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
-.ctl-item.rich{flex-wrap:wrap;align-items:flex-start}
-.ctl-item.rich .ctl-time{padding-top:2px}
-.ctl-item.rich .ctl-side{flex-direction:column;align-items:flex-end;gap:6px}
-.ctl-acts{flex:0 0 100%;display:flex;flex-wrap:nowrap;gap:6px;margin-top:2px}
-.ctl-act{padding:5px 9px;font-size:12px;white-space:nowrap;font-weight:500;border-radius:var(--r);background:var(--surf2);border:1px solid var(--bord);color:var(--txt);text-decoration:none;font-family:inherit;cursor:pointer;line-height:1.3}
+.ctl-item.rich .ctl-side{flex-direction:column;align-items:flex-end;align-self:flex-start;gap:6px}
+.ctl-acts{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.ctl-act{padding:3px 6px;font-size:11px;white-space:nowrap;font-weight:500;border-radius:var(--r);background:var(--surf2);border:1px solid var(--bord);color:var(--txt);text-decoration:none;font-family:inherit;cursor:pointer;line-height:1.3}
 .ctl-act:hover{border-color:var(--bord2)}
 .ctl-done{color:var(--ok);border-color:rgba(63,185,80,.35);width:36px;height:30px;padding:0;font-size:16px;font-weight:700}
 </style>
@@ -1089,9 +1087,9 @@ function renderControls(el) {
         <div class="ctl-name">${esc(r.chantier)}</div>
         <div class="ctl-addr">📍 ${esc(r.adresse) || '—'}</div>
         ${info ? `<div class="ctl-info">${info}</div>` : ''}
+        ${acts}
       </div>
       <div class="ctl-side">${done}${withTime ? '' : bCtrl(r.controle)}${bStatut(r.statut)}${r.technicien?`<span class="tech-tag">${esc(r.technicien)}</span>`:''}</div>
-      ${acts}
     </div>`;
   };
 
