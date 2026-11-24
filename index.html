@@ -1007,9 +1007,11 @@ function renderCards(el) {
       ${r.facteurs==='OUI !'?'<div class="ext-dot" title="Influences externes (⚠️)"></div>':''}
       <div class="card-top"><div class="card-name">${esc(r.chantier)}</div>${bStatut(r.statut)}</div>
       ${r.adresse?`<div class="card-addr">📍 ${esc(r.adresse)}</div>`:''}
-      <div class="card-meta">
+      ${(r.type||r.technicien)?`<div class="card-meta" style="margin-bottom:5px">
         ${r.type?`<span class="badge b-def">${esc(r.type)}</span>`:''}
         ${r.technicien?`<span class="tech-tag">${esc(r.technicien)}</span>`:''}
+      </div>`:''}
+      <div class="card-meta">
         ${bPlanCard(r.plans)}${bCtrlCard(r.controle)}${bEtiqCard(r.etiquettes)}
       </div>
       ${r.note?`<div class="card-note">${esc(r.note)}</div>`:''}
