@@ -316,12 +316,12 @@ select.finput{cursor:pointer;appearance:none;-webkit-appearance:none;background-
   .mob-bar .vt .lbl{display:none}
 }
 
-/* ─── FILTRES COMPACTS EN PAYSAGE (iPhone horizontal) ─── */
-@media(orientation:landscape) and (max-height:500px){
+/* ─── FILTRES COMPACTS : portrait ET paysage (même taille) ─── */
+@media(max-width:680px),(orientation:landscape) and (max-height:500px){
   .toolbar{padding:4px 10px 7px;gap:5px}
   .fg{gap:2px}
-  .fg .flabel{font-size:8.5px;letter-spacing:.3px}
-  .fsel{font-size:13px;padding:4px 22px 4px 8px}
+  .fg .flabel{font-size:8px;letter-spacing:.3px}
+  .fsel{font-size:12px;padding:3px 20px 3px 7px}
   .stat{font-size:10px}
 }
 </style>
