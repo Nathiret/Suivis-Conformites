@@ -337,6 +337,12 @@ input[type=date].finput::-webkit-datetime-edit,input[type=time].finput::-webkit-
 .dt-wrap{display:flex;gap:6px;align-items:stretch}
 .dt-clear{flex-shrink:0;width:38px;background:var(--surf2);border:1px solid var(--bord);border-radius:var(--r);color:var(--txt2);font-size:14px;cursor:pointer;font-family:inherit}
 .dt-clear:hover{color:var(--err);border-color:var(--bord2)}
+
+/* Regroupements repliables (vue Contrôles) */
+.ctl-h{cursor:pointer;user-select:none;-webkit-user-select:none}
+.ctl-h .chev{display:inline-block;font-size:11px;color:var(--txt3);transition:transform .15s}
+.ctl-sec.collapsed .ctl-h .chev{transform:rotate(-90deg)}
+.ctl-sec.collapsed .ctl-body{display:none}
 </style>
 </head>
 <body>
@@ -1031,6 +1037,20 @@ function renderCards(el) {
 }
 
 // Vue « Contrôles » : contrôles datés à venir, puis contrôles sans date à fixer
+// Regroupements de la vue Contrôles : repliables en cliquant sur le titre (mémorisé)
+function ctlCollapsed() { try { return JSON.parse(lsGet('tis_ctl_collapsed') || '[]'); } catch(e) { return []; } }
+function secOpen(id, title, n) {
+  const col = ctlCollapsed().includes(id);
+  return `<div class="ctl-sec${col ? ' collapsed' : ''}" data-sec="${id}"><div class="ctl-h" onclick="toggleSec('${id}')"><span class="chev">▾</span>${title} <span class="cbadge">${n}</span></div><div class="ctl-body">`;
+}
+function toggleSec(id) {
+  let list = ctlCollapsed();
+  list = list.includes(id) ? list.filter(x => x !== id) : [...list, id];
+  lsSet('tis_ctl_collapsed', JSON.stringify(list));
+  const sec = document.querySelector(`.ctl-sec[data-sec="${id}"]`);
+  if (sec) sec.classList.toggle('collapsed', list.includes(id));
+}
+
 function renderControls(el) {
   const today = dateNum(dmy(new Date()));
   const tomorrow = dateNum(dmy(new Date(Date.now() + 86400000)));
@@ -1051,7 +1071,7 @@ function renderControls(el) {
       <div class="ctl-side">${withTime ? '' : bCtrl(r.controle)}${bStatut(r.statut)}${r.technicien?`<span class="tech-tag">${esc(r.technicien)}</span>`:''}</div>
     </div>`;
 
-  let html = `<div class="ctl-sec"><div class="ctl-h">📅 Contrôles planifiés à venir <span class="cbadge">${upcoming.length}</span></div>`;
+  let html = secOpen('upcoming', '📅 Contrôles planifiés à venir', upcoming.length);
   if (!upcoming.length) {
     html += `<div class="ctl-list"><div class="ctl-empty">Aucun contrôle daté à venir${activeFilterCount()||mineOnly ? ' avec les filtres actuels' : ''}.</div></div>`;
   } else {
@@ -1069,19 +1089,19 @@ function renderControls(el) {
     });
     if (open) html += '</div>';
   }
-  html += '</div>';
+  html += '</div></div>';
 
   // 2) Chantiers terminés dont il reste du back-office : contrôle à planifier dès que c'est fini
   const backOffice = toPlan.filter(r => r.statut === 'Terminé');
-  html += `<div class="ctl-sec"><div class="ctl-h">🧾 Chantiers terminés : back-office à finir <span class="cbadge">${backOffice.length}</span></div>`;
+  html += secOpen('backoffice', '🧾 Chantiers terminés : back-office à finir', backOffice.length);
   html += backOffice.length
     ? `<div class="ctl-list">${backOffice.map(r => item(r, false)).join('')}</div>`
     : '<div class="ctl-list"><div class="ctl-empty">Aucun chantier terminé en attente de back-office.</div></div>';
-  html += '</div>';
+  html += '</div></div>';
 
   // 3) Chantiers à mettre au planning (pour le patron), sans date
   const toSchedule = toPlan.filter(r => r.statut !== 'Terminé');
-  html += `<div class="ctl-sec"><div class="ctl-h">🗓 Chantiers à planifier, sans date <span class="cbadge">${toSchedule.length}</span></div>`;
+  html += secOpen('toschedule', '🗓 Chantiers à planifier, sans date', toSchedule.length);
   if (!toSchedule.length) {
     html += '<div class="ctl-list"><div class="ctl-empty">Rien à planifier.</div></div>';
   } else {
@@ -1089,7 +1109,7 @@ function renderControls(el) {
     html += `<div class="ctl-list">${first.map(r => item(r, false)).join('')}</div>`;
     if (rest.length) html += `<details class="ctl-more"><summary>Afficher les ${rest.length} autres</summary><div class="ctl-list">${rest.map(r => item(r, false)).join('')}</div></details>`;
   }
-  html += '</div>';
+  html += '</div></div>';
   el.innerHTML = html;
 }
 
