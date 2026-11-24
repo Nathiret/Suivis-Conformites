@@ -154,16 +154,17 @@ tr:hover td{background:var(--surf2);color:var(--txt);cursor:pointer}
 /* BADGES */
 .badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;white-space:nowrap}
 
-.b-termine{background:rgba(63,185,80,.1);color:#3fb950}
-.b-encours{background:rgba(210,153,34,.15);color:#d29922}
-.b-plan{background:rgba(188,140,255,.12);color:var(--purple)}
-.b-aplan{background:rgba(210,153,34,.12);color:var(--warn)}
-.b-acompte{background:rgba(248,81,73,.1);color:#ff7b72}
+/* Palette alignée sur le Google Sheet (adaptée au thème sombre) */
+.b-vert{background:rgba(63,185,80,.15);color:#3fb950}
+.b-jaune{background:rgba(227,179,65,.16);color:#e3b341}
+.b-violet{background:rgba(168,85,247,.17);color:#c084fc}
+.b-bleugris{background:rgba(110,160,180,.17);color:#8ec5d6}
+.b-rouge{background:rgba(248,81,73,.15);color:#ff7b72}
+.b-bleu{background:rgba(56,160,230,.16);color:#6cb8f0}
+.b-gris{background:rgba(139,148,158,.14);color:var(--txt2)}
+.b-orange{background:rgba(251,146,60,.16);color:#fb923c}
+.b-rougefonce{background:#b42318;color:#fff}
 .b-def{background:rgba(139,148,158,.08);color:var(--txt2)}
-.b-ctrl-prev{background:rgba(210,153,34,.12);color:var(--warn)}
-.b-ctrl-att{background:rgba(130,80,255,.15);color:#a78bfa}
-.b-etiq-f{background:rgba(248,81,73,.1);color:#ff7b72}
-.b-etiq-ok{background:rgba(63,185,80,.1);color:#3fb950}
 .tech-tag{background:var(--surf3);color:var(--txt2);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500;white-space:nowrap}
 .ext-oui{background:rgba(248,81,73,.1);color:#ff7b72;font-size:11px;padding:2px 7px;border-radius:4px;font-weight:600}
 .ext-non{color:var(--txt3);font-size:11px}
@@ -271,6 +272,27 @@ select.finput{cursor:pointer;appearance:none;-webkit-appearance:none;background-
   .search-wrap{order:5;flex:0 0 100%;max-width:100%}
   .search-wrap input{font-size:16px}
 
+
+  .content{padding:12px 12px calc(16px + var(--safe-b))}
+  .tbl-wrap{border-radius:var(--r)}
+  .grid{grid-template-columns:1fr}
+  .ctl-item{padding:11px 12px;gap:10px}
+  .ctl-side .badge{display:none}
+
+  .d-panel{width:100vw;border-left:none}
+  .d-topbar{padding:calc(10px + var(--safe-t)) 12px 10px;gap:6px}
+  .d-title{font-size:15px}
+  .d-body{padding:16px 14px}
+  .fg2{grid-template-columns:1fr}
+
+  .m-overlay{padding:0;align-items:flex-end}
+  .modal{width:100%;max-height:calc(95vh - var(--safe-t));border-radius:var(--r2) var(--r2) 0 0}
+
+  .toast-wrap{left:12px;right:12px}
+}
+
+/* ─── BARRE MOBILE + FILTRES : portrait ET paysage (même style) ─── */
+@media(max-width:680px),(orientation:landscape) and (max-height:500px){
   /* Toolbar mobile : cachée par défaut, ouverte via le bouton Filtres */
   .toolbar{display:none;padding:8px 12px 12px;gap:8px}
   .toolbar.mob-open{display:flex}
@@ -292,24 +314,7 @@ select.finput{cursor:pointer;appearance:none;-webkit-appearance:none;background-
   .mob-bar .vt{margin-left:auto}
   .mob-bar .vt button{padding:7px 11px}
   .mob-bar .vt .lbl{display:none}
-
-  .content{padding:12px 12px calc(16px + var(--safe-b))}
-  .tbl-wrap{border-radius:var(--r)}
-  .grid{grid-template-columns:1fr}
-  .ctl-item{padding:11px 12px;gap:10px}
-  .ctl-side .badge{display:none}
-
-  .d-panel{width:100vw;border-left:none}
-  .d-topbar{padding:calc(10px + var(--safe-t)) 12px 10px;gap:6px}
-  .d-title{font-size:15px}
-  .d-body{padding:16px 14px}
-  .fg2{grid-template-columns:1fr}
-
-  .m-overlay{padding:0;align-items:flex-end}
-  .modal{width:100%;max-height:calc(95vh - var(--safe-t));border-radius:var(--r2) var(--r2) 0 0}
-
-  .toast-wrap{left:12px;right:12px}
-}@media(orientation:landscape) and (max-height:500px){.toolbar{display:none;padding:8px 12px 12px;gap:8px}.toolbar.mob-open{display:flex}.mob-bar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surf);border-bottom:1px solid var(--bord);flex-shrink:0}}
+}
 </style>
 </head>
 <body>
@@ -407,12 +412,12 @@ select.finput{cursor:pointer;appearance:none;-webkit-appearance:none;background-
     </div>
     <div class="fg"><span class="flabel">Contrôle</span>
       <select class="fsel" id="fCtrl" onchange="filter()">
-        <option value="">Tous</option><option>À prévoir</option><option>En attente</option><option>Planifié</option><option>Fait</option>
+        <option value="">Tous</option><option>À prévoir</option><option>En attente</option><option>Prévu</option><option>Fait</option><option>Non-conforme !</option>
       </select>
     </div>
     <div class="fg"><span class="flabel">Étiquettes</span>
       <select class="fsel" id="fEtiq" onchange="filter()">
-        <option value="">Toutes</option><option>À Faire !</option><option>Faites</option>
+        <option value="">Toutes</option><option>À Faire !</option><option>À Placer !</option><option>À Modifier !</option><option>Faites</option>
       </select>
     </div>
     <div class="fg"><span class="flabel">Infl. ext.</span>
@@ -480,7 +485,7 @@ select.finput{cursor:pointer;appearance:none;-webkit-appearance:none;background-
         <div class="fld"><div class="flbl">Technicien</div>
           <select class="finput" id="n_tech"><option value="">—</option><option>Nathan</option><option>Melvyn</option><option>Gary</option><option>Gabriel</option><option>Eddy</option><option>Logan</option><option>Multi</option><option>Théo</option></select></div>
         <div class="fld"><div class="flbl">Plans</div>
-          <select class="finput" id="n_plans"><option value="">—</option><option>À faire</option><option>En attente</option><option>Commencé</option><option>Fait</option></select></div>
+          <select class="finput" id="n_plans"><option value="">—</option><option>À faire</option><option>Commencé</option><option>En attente</option><option>À Imprimer</option><option>Fait</option></select></div>
         <div class="fld"><div class="flbl">Date début</div>
           <input type="date" class="finput" id="n_debut"></div>
         <div class="fld"><div class="flbl">Date fin estimée</div>
@@ -488,11 +493,11 @@ select.finput{cursor:pointer;appearance:none;-webkit-appearance:none;background-
         <div class="fld"><div class="flbl">Temps estimé</div>
           <input class="finput" id="n_temps" placeholder="Ex: 2 jours"></div>
         <div class="fld"><div class="flbl">Contrôle</div>
-          <select class="finput" id="n_ctrl"><option value="">—</option><option>À prévoir</option><option>En attente</option><option>Planifié</option><option>Fait</option></select></div>
+          <select class="finput" id="n_ctrl"><option value="">—</option><option>À prévoir</option><option>En attente</option><option>Prévu</option><option>Fait</option><option>Non-conforme !</option></select></div>
         <div class="fld"><div class="flbl">Facteurs externes</div>
           <select class="finput" id="n_ext"><option>NON</option><option>OUI !</option></select></div>
         <div class="fld"><div class="flbl">Étiquettes</div>
-          <select class="finput" id="n_etiq"><option value="">—</option><option>À Faire !</option><option>Faites</option></select></div>
+          <select class="finput" id="n_etiq"><option value="">—</option><option>À Faire !</option><option>À Placer !</option><option>À Modifier !</option><option>Faites</option></select></div>
         <div class="fld full"><div class="flbl">Notes</div>
           <textarea class="finput ta" id="n_note" placeholder="Remarques, points d'attention…"></textarea></div>
       </div>
@@ -832,7 +837,7 @@ function filter() {
     if (fS && r.statut !== fS) return false;
     if (fT && r.technicien !== fT) return false;
     if (fTy && normalizeType(r.type) !== fTy) return false;
-    if (fC && r.controle !== fC) return false;
+    if (fC && (r.controle === 'Planifié' ? 'Prévu' : r.controle) !== fC) return false;
     if (fE && !(r.etiquettes || '').includes(fE)) return false;
     if (fEx && r.facteurs !== fEx) return false;
     if (q) {
@@ -914,7 +919,7 @@ function updateFilterBadge() {
 function renderStats() {
   const counts = {};
   filtered.forEach(r => { counts[r.statut] = (counts[r.statut]||0)+1; });
-  const colors = {'En cours':'#58a6ff','Terminé':'#3fb950','Plannifié':'#bc8cff','À plannifier':'#d29922','Attente acompte':'#ff7b72'};
+  const colors = {'En cours':'#e3b341','Terminé':'#3fb950','Plannifié':'#8ec5d6','À plannifier':'#c084fc','Attente acompte':'#ff7b72'}; // = couleurs des badges
   const order = s => { const i = STATUT_ORDER.indexOf(s); return i < 0 ? 99 : i; };
   document.getElementById('stats').innerHTML =
     Object.entries(counts).sort((a,b) => order(a[0]) - order(b[0])).map(([s,c]) =>
@@ -965,7 +970,7 @@ function renderTable(el) {
       <td>${esc(r.type)}</td>
       <td>${bStatut(r.statut)}</td>
       <td>${r.technicien?`<span class="tech-tag">${esc(r.technicien)}</span>`:''}</td>
-      <td>${esc(r.plans)}</td>
+      <td>${bPlans(r.plans)}</td>
       <td style="font-size:12px;color:var(--txt3);font-family:monospace">${esc(r.debut)}</td>
       <td>${bCtrl(r.controle)}</td>
       <td>${bEtiq(r.etiquettes)}</td>
@@ -1065,43 +1070,30 @@ function sortBy(k) {
 // ═══════════════════════════════════════════════
 //  BADGES
 // ═══════════════════════════════════════════════
-function bStatut(s) {
-  const m={'Terminé':'b-termine','En cours':'b-encours','Plannifié':'b-plan','À plannifier':'b-aplan','Attente acompte':'b-acompte'};
-  return s?`<span class="badge ${m[s]||'b-def'}">${esc(s)}</span>`:'';
+// Couleurs = celles du Google Sheet. Clé normalisée (sans « ! », minuscules)
+const _nk = v => String(v||'').replace(/!/g,'').trim().toLowerCase();
+const COUL_STATUT = {'terminé':'b-vert','en cours':'b-jaune','à plannifier':'b-violet','plannifié':'b-bleugris','attente acompte':'b-rouge'};
+const COUL_PLANS  = {'à faire':'b-rouge','commencé':'b-bleu','en attente':'b-gris','à imprimer':'b-orange','fait':'b-vert'};
+const COUL_CTRL   = {'à prévoir':'b-rouge','en attente':'b-gris','prévu':'b-jaune','planifié':'b-jaune','fait':'b-vert','non-conforme':'b-rougefonce'};
+const COUL_ETIQ   = {'faites':'b-vert','à faire':'b-rouge','à placer':'b-orange','à modifier':'b-bleu'};
+function badge(map, v, emoji) {
+  if (!v) return '';
+  return `<span class="badge ${map[_nk(v)]||'b-def'}">${emoji?emoji+' ':''}${esc(v)}</span>`;
 }
-function bCtrl(c) {
-  if (!c) return '';
-  const m={'À prévoir':'b-ctrl-prev','En attente':'b-ctrl-att','Planifié':'b-plan','Fait':'b-termine'};
-  return `<span class="badge ${m[c]||'b-def'}">${esc(c)}</span>`;
-}
-function bEtiq(e) {
-  if (!e) return '';
-  if (e.includes('À Faire')) return `<span class="badge b-etiq-f">📋 À Faire</span>`;
-  if (e.includes('Faites')) return `<span class="badge b-etiq-ok">✓ Faites</span>`;
-  return `<span class="badge b-def">${esc(e)}</span>`;
-}
+// Vue TABLEAU / contrôles : couleur seule, sans émoji
+function bStatut(s) { return badge(COUL_STATUT, s); }
+function bPlans(p)  { return badge(COUL_PLANS, p); }
+function bCtrl(c)   { return badge(COUL_CTRL, c); }
+function bEtiq(e)   { return badge(COUL_ETIQ, e); }
 function bExt(f) {
   if (!f||f==='NON') return `<span class="ext-non">NON</span>`;
   return `<span class="ext-oui">OUI!</span>`;
 }
 
-// ── Fonctions badge pour vue CARTE (avec emojis) ──────────────
-function bCtrlCard(c) {
-  if (!c) return '';
-  const m={'À prévoir':'b-ctrl-prev','En attente':'b-ctrl-att','Planifié':'b-plan','Fait':'b-termine'};
-  return `<span class="badge ${m[c]||'b-def'}">🔍 ${esc(c)}</span>`;
-}
-function bEtiqCard(e) {
-  if (!e) return '';
-  if (e.includes('À Faire')) return `<span class="badge b-etiq-f">🏷️ À Faire</span>`;
-  if (e.includes('Faites')) return `<span class="badge b-etiq-ok">🏷️ Faites</span>`;
-  return `<span class="badge b-def">🏷️ ${esc(e)}</span>`;
-}
-function bPlanCard(p) {
-  if (!p) return '';
-  const m={'À prévoir':'b-ctrl-prev','En attente':'b-ctrl-att','Planifié':'b-plan','Fait':'b-termine','Envoyé':'b-termine'};
-  return `<span class="badge ${m[p]||'b-def'}">📐 ${esc(p)}</span>`;
-}
+// ── Vue CARTES : avec émojis ──────────────
+function bPlanCard(p) { return badge(COUL_PLANS, p, '📐'); }
+function bCtrlCard(c) { return badge(COUL_CTRL, c, '🔍'); }
+function bEtiqCard(e) { return badge(COUL_ETIQ, e, '🏷️'); }
 
 // ═══════════════════════════════════════════════
 //  DETAIL PANEL
@@ -1196,15 +1188,15 @@ function renderDet() {
     <div class="dsec"><div class="dsec-ttl">Statut & Affectation</div><div class="fg2">
       ${f('Statut','statut','text',STATUT_ORDER)}
       ${f('Technicien','technicien','text',['Nathan','Melvyn','Gary','Gabriel','Eddy','Logan','Multi','Théo'])}
-      ${f('Plans','plans','text',['À faire','En attente','Commencé','Fait'])}
-      ${f('Étiquettes','etiquettes','text',['À Faire !','Faites'])}
+      ${f('Plans','plans','text',['À faire','Commencé','En attente','À Imprimer','Fait'])}
+      ${f('Étiquettes','etiquettes','text',['À Faire !','À Placer !','À Modifier !','Faites'])}
     </div></div>
     <div class="dsec"><div class="dsec-ttl">Planification & Temps</div><div class="fg2">
       ${f('Date début','debut','date')} ${f('Date fin réelle','fin','date')}
       ${f('Temps estimé','temps_estime')} ${f('Temps restant','temps_restant')}
     </div></div>
     <div class="dsec"><div class="dsec-ttl">Contrôle</div><div class="fg2">
-      ${f('Contrôle','controle','text',['À prévoir','En attente','Planifié','Fait'])}
+      ${f('Contrôle','controle','text',['À prévoir','En attente','Prévu','Fait','Non-conforme !'])}
       ${f('Date contrôle','date_controle','date')} ${f('Heure contrôle','heure_controle','time')}
       ${f('Facteurs externes','facteurs','text',['NON','OUI !'])}
     </div></div>
