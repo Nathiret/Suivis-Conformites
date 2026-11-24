@@ -343,6 +343,13 @@ input[type=date].finput::-webkit-datetime-edit,input[type=time].finput::-webkit-
 .ctl-h .chev{display:inline-block;font-size:11px;color:var(--txt3);transition:transform .15s}
 .ctl-sec.collapsed .ctl-h .chev{transform:rotate(-90deg)}
 .ctl-sec.collapsed .ctl-body{display:none}
+
+/* Vue Contrôles : infos et actions rapides sur les contrôles à venir */
+.ctl-info{font-size:12px;color:var(--txt3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.ctl-acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+.ctl-act{padding:5px 10px;font-size:12px;font-weight:500;border-radius:var(--r);background:var(--surf2);border:1px solid var(--bord);color:var(--txt);text-decoration:none;font-family:inherit;cursor:pointer;line-height:1.3}
+.ctl-act:hover{border-color:var(--bord2)}
+.ctl-done{color:var(--ok);border-color:rgba(63,185,80,.35)}
 </style>
 </head>
 <body>
@@ -1061,15 +1068,28 @@ function renderControls(el) {
     .filter(r => (r.controle === 'À prévoir' || r.controle === 'En attente') && !(dateNum(r.date_controle) >= today))
     .sort((a,b) => (STATUT_ORDER.indexOf(a.statut) - STATUT_ORDER.indexOf(b.statut)) || a.chantier.localeCompare(b.chantier,'fr'));
 
-  const item = (r, withTime) => `
+  const item = (r, withTime) => {
+    let extra = '';
+    if (withTime) {
+      const tel = phoneOf(r.contact), q = encodeURIComponent(r.adresse || '');
+      const info = [r.acces ? `🔑 ${esc(r.acces)}` : '', r.contact ? `👤 ${esc(r.contact)}` : ''].filter(Boolean).join(' · ');
+      extra = (info ? `<div class="ctl-info">${info}</div>` : '') +
+        `<div class="ctl-acts" onclick="event.stopPropagation()">` +
+        (r.adresse ? `<a class="ctl-act" href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank" rel="noopener">📍 Maps</a><a class="ctl-act" href="https://waze.com/ul?q=${q}&navigate=yes" target="_blank" rel="noopener">🚗 Waze</a>` : '') +
+        (tel ? `<a class="ctl-act" href="tel:${esc(tel.href)}">📞 Appeler</a>` : '') +
+        `<button type="button" class="ctl-act ctl-done w-only" onclick="markDone(${r._row})">✓ Contrôle fait</button></div>`;
+    }
+    return `
     <div class="ctl-item" onclick="openDet(${r._row})">
       ${withTime ? `<div class="ctl-time${r.heure_controle ? '' : ' none'}">${r.heure_controle ? esc(r.heure_controle.slice(0,5)) : '—'}</div>` : ''}
       <div class="ctl-main">
         <div class="ctl-name">${esc(r.chantier)}</div>
         <div class="ctl-addr">📍 ${esc(r.adresse) || '—'}</div>
+        ${extra}
       </div>
       <div class="ctl-side">${withTime ? '' : bCtrl(r.controle)}${bStatut(r.statut)}${r.technicien?`<span class="tech-tag">${esc(r.technicien)}</span>`:''}</div>
     </div>`;
+  };
 
   let html = secOpen('upcoming', '📅 Contrôles planifiés à venir', upcoming.length);
   if (!upcoming.length) {
@@ -1091,25 +1111,29 @@ function renderControls(el) {
   }
   html += '</div></div>';
 
-  // 2) Chantiers terminés dont il reste du back-office : contrôle à planifier dès que c'est fini
-  const backOffice = toPlan.filter(r => r.statut === 'Terminé');
-  html += secOpen('backoffice', '🧾 Chantiers terminés : back-office à finir', backOffice.length);
-  html += backOffice.length
-    ? `<div class="ctl-list">${backOffice.map(r => item(r, false)).join('')}</div>`
-    : '<div class="ctl-list"><div class="ctl-empty">Aucun chantier terminé en attente de back-office.</div></div>';
-  html += '</div></div>';
+  const byName = (x, y) => x.chantier.localeCompare(y.chantier, 'fr');
+  const section = (id, title, rows, empty, limit) => {
+    let h = secOpen(id, title, rows.length);
+    if (!rows.length) return h + `<div class="ctl-list"><div class="ctl-empty">${empty}</div></div></div></div>`;
+    const first = limit ? rows.slice(0, limit) : rows, rest = limit ? rows.slice(limit) : [];
+    h += `<div class="ctl-list">${first.map(r => item(r, false)).join('')}</div>`;
+    if (rest.length) h += `<details class="ctl-more"><summary>Afficher les ${rest.length} autres</summary><div class="ctl-list">${rest.map(r => item(r, false)).join('')}</div></details>`;
+    return h + '</div></div>';
+  };
 
-  // 3) Chantiers à mettre au planning (pour le patron), sans date
-  const toSchedule = toPlan.filter(r => r.statut !== 'Terminé');
-  html += secOpen('toschedule', '🗓 Chantiers à planifier, sans date', toSchedule.length);
-  if (!toSchedule.length) {
-    html += '<div class="ctl-list"><div class="ctl-empty">Rien à planifier.</div></div>';
-  } else {
-    const first = toSchedule.slice(0, 15), rest = toSchedule.slice(15);
-    html += `<div class="ctl-list">${first.map(r => item(r, false)).join('')}</div>`;
-    if (rest.length) html += `<details class="ctl-more"><summary>Afficher les ${rest.length} autres</summary><div class="ctl-list">${rest.map(r => item(r, false)).join('')}</div></details>`;
-  }
-  html += '</div></div>';
+  // 2) Contrôles à planifier : « Prévu » sans date, et « Non-conforme » (à recontrôler)
+  const toBook = filtered
+    .filter(r => !(dateNum(r.date_controle) >= today) &&
+      (((r.controle === 'Prévu' || r.controle === 'Planifié') && !dateNum(r.date_controle)) || String(r.controle).startsWith('Non-conforme')))
+    .sort(byName);
+  html += section('tobook', '📝 Contrôles à planifier', toBook, 'Aucun contrôle à planifier.');
+
+  // 3) Chantiers terminés dont il reste du back-office : contrôle à planifier dès que c'est fini
+  html += section('backoffice', '🧾 Chantiers terminés : back-office à finir', toPlan.filter(r => r.statut === 'Terminé'), 'Aucun chantier terminé en attente de back-office.');
+
+  // 4) Chantiers en cours  5) Chantiers à planifier (pour le patron)
+  html += section('encours', '🚧 Chantiers en cours', filtered.filter(r => r.statut === 'En cours').sort(byName), 'Aucun chantier en cours.', 15);
+  html += section('toschedule', '🗓 Chantiers à planifier', filtered.filter(r => r.statut === 'À plannifier').sort(byName), 'Aucun chantier à planifier.', 15);
   el.innerHTML = html;
 }
 
@@ -1260,6 +1284,28 @@ function renderDet() {
     <div class="dsec"><div class="dsec-ttl">Notes</div><div class="fg2">
       ${f('Note','note','textarea')}
     </div></div>`;
+}
+
+async function markDone(rowNum) {
+  if (!canWrite()) return;
+  const r = allData.find(x => x._row === rowNum);
+  if (!r) return;
+  if (!confirm(`Marquer le contrôle de « ${r.chantier} » comme fait ?`)) return;
+  sync('load', 'Écriture…');
+  try {
+    const { _row, ...data } = { ...r, controle: 'Fait' };
+    const res = await apiWrite({ action:'update', row:_row, expect:r.chantier, data });
+    const idx = allData.findIndex(x => x._row === _row);
+    if (idx >= 0) allData[idx] = { ...r, controle: 'Fait', _row: res.row || _row };
+    filter();
+    toast('✅ Contrôle marqué comme fait', 'ok');
+    loadData();
+  } catch(e) {
+    if (e.code === 'AUTH') return;
+    sync('err', 'Erreur écriture');
+    toast('❌ ' + e.message, 'err', 6000);
+    if (e.code === 'CONFLICT') loadData();
+  }
 }
 
 function clearDt(btn) {
