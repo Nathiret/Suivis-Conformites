@@ -1063,11 +1063,21 @@ function renderControls(el) {
   }
   html += '</div>';
 
-  html += `<div class="ctl-sec"><div class="ctl-h">🗓 À planifier, sans date <span class="cbadge">${toPlan.length}</span></div>`;
-  if (!toPlan.length) {
+  // 2) Chantiers terminés dont il reste du back-office : contrôle à planifier dès que c'est fini
+  const backOffice = toPlan.filter(r => r.statut === 'Terminé');
+  html += `<div class="ctl-sec"><div class="ctl-h">🧾 Chantiers terminés : back-office à finir <span class="cbadge">${backOffice.length}</span></div>`;
+  html += backOffice.length
+    ? `<div class="ctl-list">${backOffice.map(r => item(r, false)).join('')}</div>`
+    : '<div class="ctl-list"><div class="ctl-empty">Aucun chantier terminé en attente de back-office.</div></div>';
+  html += '</div>';
+
+  // 3) Chantiers à mettre au planning (pour le patron), sans date
+  const toSchedule = toPlan.filter(r => r.statut !== 'Terminé');
+  html += `<div class="ctl-sec"><div class="ctl-h">🗓 Chantiers à planifier, sans date <span class="cbadge">${toSchedule.length}</span></div>`;
+  if (!toSchedule.length) {
     html += '<div class="ctl-list"><div class="ctl-empty">Rien à planifier.</div></div>';
   } else {
-    const first = toPlan.slice(0, 15), rest = toPlan.slice(15);
+    const first = toSchedule.slice(0, 15), rest = toSchedule.slice(15);
     html += `<div class="ctl-list">${first.map(r => item(r, false)).join('')}</div>`;
     if (rest.length) html += `<details class="ctl-more"><summary>Afficher les ${rest.length} autres</summary><div class="ctl-list">${rest.map(r => item(r, false)).join('')}</div></details>`;
   }
