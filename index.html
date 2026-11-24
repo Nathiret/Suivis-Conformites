@@ -346,10 +346,13 @@ input[type=date].finput::-webkit-datetime-edit,input[type=time].finput::-webkit-
 
 /* Vue Contrôles : infos et actions rapides sur les contrôles à venir */
 .ctl-info{font-size:12px;color:var(--txt3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
-.ctl-acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
-.ctl-act{padding:5px 10px;font-size:12px;font-weight:500;border-radius:var(--r);background:var(--surf2);border:1px solid var(--bord);color:var(--txt);text-decoration:none;font-family:inherit;cursor:pointer;line-height:1.3}
+.ctl-item.rich{flex-wrap:wrap;align-items:flex-start}
+.ctl-item.rich .ctl-time{padding-top:2px}
+.ctl-item.rich .ctl-side{flex-direction:column;align-items:flex-end;gap:6px}
+.ctl-acts{flex:0 0 100%;display:flex;flex-wrap:nowrap;gap:6px;margin-top:2px}
+.ctl-act{padding:5px 9px;font-size:12px;white-space:nowrap;font-weight:500;border-radius:var(--r);background:var(--surf2);border:1px solid var(--bord);color:var(--txt);text-decoration:none;font-family:inherit;cursor:pointer;line-height:1.3}
 .ctl-act:hover{border-color:var(--bord2)}
-.ctl-done{color:var(--ok);border-color:rgba(63,185,80,.35)}
+.ctl-done{color:var(--ok);border-color:rgba(63,185,80,.35);width:36px;height:30px;padding:0;font-size:16px;font-weight:700}
 </style>
 </head>
 <body>
@@ -1061,33 +1064,34 @@ function toggleSec(id) {
 function renderControls(el) {
   const today = dateNum(dmy(new Date()));
   const tomorrow = dateNum(dmy(new Date(Date.now() + 86400000)));
+  const isPrevu = r => r.controle === 'Prévu' || r.controle === 'Planifié';
   const upcoming = filtered
-    .filter(r => dateNum(r.date_controle) >= today && r.controle !== 'Fait')
-    .sort((a,b) => (dateNum(a.date_controle) - dateNum(b.date_controle)) || (a.heure_controle||'99').localeCompare(b.heure_controle||'99'));
+    .filter(r => (dateNum(r.date_controle) >= today && r.controle !== 'Fait') || (isPrevu(r) && !dateNum(r.date_controle)))
+    .sort((a,b) => ((dateNum(a.date_controle) || 99999999) - (dateNum(b.date_controle) || 99999999)) || (a.heure_controle||'99').localeCompare(b.heure_controle||'99') || a.chantier.localeCompare(b.chantier,'fr'));
   const toPlan = filtered
     .filter(r => (r.controle === 'À prévoir' || r.controle === 'En attente') && !(dateNum(r.date_controle) >= today))
     .sort((a,b) => (STATUT_ORDER.indexOf(a.statut) - STATUT_ORDER.indexOf(b.statut)) || a.chantier.localeCompare(b.chantier,'fr'));
 
   const item = (r, withTime) => {
-    let extra = '';
+    let acts = '', done = '';
     if (withTime) {
       const tel = phoneOf(r.contact), q = encodeURIComponent(r.adresse || '');
-      const info = [r.acces ? `🔑 ${esc(r.acces)}` : '', r.contact ? `👤 ${esc(r.contact)}` : ''].filter(Boolean).join(' · ');
-      extra = (info ? `<div class="ctl-info">${info}</div>` : '') +
-        `<div class="ctl-acts" onclick="event.stopPropagation()">` +
+      acts = `<div class="ctl-acts" onclick="event.stopPropagation()">` +
         (r.adresse ? `<a class="ctl-act" href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank" rel="noopener">📍 Maps</a><a class="ctl-act" href="https://waze.com/ul?q=${q}&navigate=yes" target="_blank" rel="noopener">🚗 Waze</a>` : '') +
-        (tel ? `<a class="ctl-act" href="tel:${esc(tel.href)}">📞 Appeler</a>` : '') +
-        `<button type="button" class="ctl-act ctl-done w-only" onclick="markDone(${r._row})">✓ Contrôle fait</button></div>`;
+        (tel ? `<a class="ctl-act" href="tel:${esc(tel.href)}">📞 Appeler</a>` : '') + `</div>`;
+      done = `<button type="button" class="ctl-act ctl-done w-only" title="Contrôle fait" onclick="event.stopPropagation();markDone(${r._row})">✓</button>`;
     }
+    const info = withTime ? [r.acces ? `🔑 ${esc(r.acces)}` : '', r.contact ? `👤 ${esc(r.contact)}` : ''].filter(Boolean).join(' · ') : '';
     return `
-    <div class="ctl-item" onclick="openDet(${r._row})">
+    <div class="ctl-item${withTime ? ' rich' : ''}" onclick="openDet(${r._row})">
       ${withTime ? `<div class="ctl-time${r.heure_controle ? '' : ' none'}">${r.heure_controle ? esc(r.heure_controle.slice(0,5)) : '—'}</div>` : ''}
       <div class="ctl-main">
         <div class="ctl-name">${esc(r.chantier)}</div>
         <div class="ctl-addr">📍 ${esc(r.adresse) || '—'}</div>
-        ${extra}
+        ${info ? `<div class="ctl-info">${info}</div>` : ''}
       </div>
-      <div class="ctl-side">${withTime ? '' : bCtrl(r.controle)}${bStatut(r.statut)}${r.technicien?`<span class="tech-tag">${esc(r.technicien)}</span>`:''}</div>
+      <div class="ctl-side">${done}${withTime ? '' : bCtrl(r.controle)}${bStatut(r.statut)}${r.technicien?`<span class="tech-tag">${esc(r.technicien)}</span>`:''}</div>
+      ${acts}
     </div>`;
   };
 
@@ -1101,7 +1105,7 @@ function renderControls(el) {
       if (n !== curDay) {
         if (open) html += '</div>';
         curDay = n;
-        const lbl = n === today ? "Aujourd'hui" : n === tomorrow ? 'Demain' : longDate(r.date_controle);
+        const lbl = !n ? 'Date à fixer' : n === today ? "Aujourd'hui" : n === tomorrow ? 'Demain' : longDate(r.date_controle);
         html += `<div class="ctl-day${n===today?' today':''}">${lbl}</div><div class="ctl-list">`;
         open = true;
       }
@@ -1121,10 +1125,9 @@ function renderControls(el) {
     return h + '</div></div>';
   };
 
-  // 2) Contrôles à planifier : « Prévu » sans date, et « Non-conforme » (à recontrôler)
+  // 2) Contrôles à planifier : tous les « À prévoir » et les « Non-conforme » (à recontrôler)
   const toBook = filtered
-    .filter(r => !(dateNum(r.date_controle) >= today) &&
-      (((r.controle === 'Prévu' || r.controle === 'Planifié') && !dateNum(r.date_controle)) || String(r.controle).startsWith('Non-conforme')))
+    .filter(r => !(dateNum(r.date_controle) >= today) && (r.controle === 'À prévoir' || String(r.controle).startsWith('Non-conforme')))
     .sort(byName);
   html += section('tobook', '📝 Contrôles à planifier', toBook, 'Aucun contrôle à planifier.');
 
